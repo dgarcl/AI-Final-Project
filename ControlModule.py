@@ -2,6 +2,7 @@
 import numpy as np
 import json
 import mdptoolbox
+import mdptoolbox.example
 
 class ControlModule:
     def __init__(self):
@@ -9,7 +10,7 @@ class ControlModule:
         pass
 
     @staticmethod
-    def generate_P(reactor_file):
+    def generate_P(reactor_file) -> np.array:
         """ Function that generates the probabilities (transition) matrix """
 
         N = 100 #Number of states
@@ -69,7 +70,7 @@ class ControlModule:
                 Pi[s][s] = i0
                 Pi[s][s+1] = i1
                 Pi[s][s+2] = i2
-        return Pd, Pm, Pi
+        return np.array([Pd, Pm, Pi]) #Array of matrices
 
 
     @staticmethod
@@ -96,5 +97,4 @@ class ControlModule:
         ### DUMMY BEHAVIOUR TO PREVENT CRASHING (MUST BE DELETED AFTER THE FULL IMPLEMENTATION) ###
         return np.zeros_like(a=demand, dtype=np.float64)
         ### ###
-
 
