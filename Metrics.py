@@ -26,7 +26,8 @@ def R2(y_true: np.ndarray, y_pred: np.ndarray) -> np.float64:
     for i in range(len(y_true)):
         mean_true += y_true[i] / len(y_true) 
 
-    regressor, mean_based_estimator = 0
+    regressor = 0
+    mean_based_estimator = 0
 
     for i in range(len(y_true)):
         regressor += (y_true[i] - y_pred[i]) ** 2
@@ -36,17 +37,20 @@ def R2(y_true: np.ndarray, y_pred: np.ndarray) -> np.float64:
 
 def Corr(y_true: np.ndarray, y_pred: np.ndarray) -> np.float64:
     """ Implementation of the Pearson's Correlation Coefficient """
-    mean_true, mean_pred = 0
+    mean_true = 0
+    mean_pred = 0
 
     for i in range(len(y_true)):
         mean_true += y_true[i] / len(y_true)
         mean_pred += y_pred[i] / len(y_true)
 
-    variance_true, variance_pred, covariance_true_pred = 0
+    var_true = 0
+    var_pred = 0
+    cov_true_pred = 0
 
     for i in range(len(y_true)):
-        variance_true += (y_true[i] - mean_true) ** 2 / len(y_true)
-        variance_pred += (y_pred[i] - mean_pred) ** 2 / len(y_true)
-        covariance_true_pred += (y_true[i] - mean_true) * (y_pred[i] - mean_pred) / len(y_true)
+        var_true += (y_true[i] - mean_true) ** 2 / len(y_true)
+        var_pred += (y_pred[i] - mean_pred) ** 2 / len(y_true)
+        cov_true_pred += (y_true[i] - mean_true) * (y_pred[i] - mean_pred) / len(y_true)
 
-    return covariance_true_pred / np.sqrt(variance_true * variance_pred)
+    return cov_true_pred / np.sqrt(var_true * var_pred)
