@@ -86,15 +86,36 @@ class ControlModule:
         ...
 
     @staticmethod
-    def control_loop(demand: np.ndarray, 
-                    probs: np.ndarray,
-                    n_states: np.int32, 
-                    n_actions: np.int32,
-                    gamma: np.float64) -> np.ndarray:
+    def control_loop(demand: np.ndarray,
+                     probs: np.ndarray,
+                     n_states: np.int32,
+                     n_actions: np.int32,
+                     gamma: np.float64) -> np.ndarray:
         """ Function that computes all the required iterations (control-loop) to satisfy the power demand """
-        ### TO BE COMPLETED BY THE STUDENTS ###
+        response = np.zeros_like(a=demand, dtype=np.float64)
 
-        ### DUMMY BEHAVIOUR TO PREVENT CRASHING (MUST BE DELETED AFTER THE FULL IMPLEMENTATION) ###
-        return np.zeros_like(a=demand, dtype=np.float64)
-        ### ###
+        for i in range(len(demand)):
+            action = ControlModule.control_iteration() #Control iteration devuelve un int pero por ahora me da igual
 
+            if action == "d":
+                outcomes = np.array([-2, -1, 0], dtype=np.int32)
+                result = np.random.choice(outcomes, p=probs[0])
+            elif action == "m":
+                outcomes = np.array([-1, 0, 1], dtype=np.int32)
+                result = np.random.choice(outcomes, p=probs[1])
+            elif action == "i":
+                outcomes = np.array([0, 1, 2], dtype=np.int32)
+                result = np.random.choice(outcomes, p=probs[2])
+            else:
+                raise ValueError(f"Unknown action: {action}")
+
+            result /= n_states
+
+            if response[i - 1] + result >= 0 and response[i - 1] + result <= 1:
+                response[i] = response[i - 1] + result
+            elif response[i - 1] + result < 0:
+                response[i] = 0        
+            elif response[i - 1] + result > 1:
+                response[i] = 1
+        
+        return response
