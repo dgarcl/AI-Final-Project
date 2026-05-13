@@ -74,16 +74,54 @@ class ControlModule:
 
 
     @staticmethod
-    def generate_R() -> np.ndarray:
+    def generate_R(demand_point: np.float64, n_states: np.int32, n_actions: np.int32) -> np.ndarray:
         """ Function that generates the rewards (costs) matrix """
-        ### TO BE COMPLETED BY THE STUDENTS ###
-        ...
+        N=n_states #Number of states
+
+        #compute base distance for all possible destination states
+        distances = np.zeros(N, dtype=np.float64)
+        for s in range(N):
+            level_power = s / 100.0 #lower bound of interval
+            distances[s] = abs(demand_point - level_power ) 
+        
+        #build R matrix
+        R= np.zeros ((n_actions ,N, N), dtype=np.float64)
+
+        for s in range(N): #original state
+            for s_next in range(N): #destination state
+                #how far is s_next from demand
+                base_cost = distances[s_next] 
+                #how far is s from demand
+                origin_distance=distances[s] 
+
+                for a in range(n_actions):
+                    #penalize x2 if destination is further from demand than origin
+                    if base_cost > origin_distance:
+                        cost = 2*base_cost
+                    else:
+                        cost = base_cost
+                    
+                    #we use negative beacuse mdptoolbox maximizes reward
+                    R[a,s,s_next]=-cost 
+
+                    
+
+
 
     @staticmethod
-    def control_iteration() -> np.int32:
+    def control_iteration(demand_point: np.float64, current_state: np.int32, P: np.ndarray, n_states: np.int32, n_actions: np.int32, gamma: np.float64) -> np.int32:
         """ Function that computes one control-iteration """
-        ### TO BE COMPLETED BY THE STUDENTS ###
-        ...
+        #generate reward matrix for demand point 
+        R=ControlModule.generate_R(demand_point=demand_point, n_states=n_states, n_actions=n_actions)
+        #Build and sol mdp with value iteration (mdptoolbox)
+        mdp=mdptoolbox.mdp.ValueIteration(transitions=P, rewards=R, discount=gamma)
+
+        mdp.run()
+
+        #mdp.policy is the optimal action for each state, we return the action for the current state
+        optimal_action = mdp.policy[current_state]
+
+        return np.int32(optimal_action)
 
     @staticmethod
     def control_loop(demand: np.ndarray,
