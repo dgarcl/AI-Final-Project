@@ -1,8 +1,6 @@
 # Import required dependencies
 import numpy as np
-import json
 import mdptoolbox
-import mdptoolbox.example
 
 class ControlModule:
     def __init__(self):
@@ -23,6 +21,7 @@ class ControlModule:
                 total += prob
             if not np.isclose(1, total):
                 raise ValueError("Invalid probabilities")
+            
         d2, d1, d0 = probabilities[0]
         m_1, m0, m1 =  probabilities[1]
         i0, i1, i2 = probabilities[2]
@@ -69,7 +68,6 @@ class ControlModule:
                 Pi[row][row+2] = i2
         return np.array([Pd, Pm, Pi]) #Array of matrices
 
-
     @staticmethod
     def generate_R(demand_point: np.float64, n_states: np.int32, n_actions: np.int32) -> np.ndarray:
         """ Function that generates the rewards (costs) matrix """
@@ -78,11 +76,11 @@ class ControlModule:
         #compute base distance for all possible destination states
         distances = np.zeros(N, dtype=np.float64)
         for s in range(N):
-            level_power = s / 100.0 #lower bound of interval
-            distances[s] = abs(demand_point - level_power ) 
+            level_power = s / N #lower bound of interval
+            distances[s] = abs(demand_point - level_power) 
         
         #build R matrix
-        R= np.zeros ((n_actions ,N, N), dtype=np.float64)
+        R = np.zeros ((n_actions ,N, N), dtype=np.float64)
 
         for s in range(N): #original state
             for s_next in range(N): #destination state
@@ -101,17 +99,16 @@ class ControlModule:
                     #we use negative beacuse mdptoolbox maximizes reward
                     R[a,s,s_next]=-cost 
 
-                    
-
-
+        return R
 
     @staticmethod
-    def control_iteration(demand_point: np.float64, current_state: np.int32, P: np.ndarray, n_states: np.int32, n_actions: np.int32, gamma: np.float64) -> np.int32:
+    def control_iteration(demand_point: np.float64, current_state: np.float64, P: np.ndarray, n_states: np.int32, n_actions: np.int32, gamma: np.float64) -> np.int32:
         """ Function that computes one control-iteration """
         #generate reward matrix for demand point 
         R=ControlModule.generate_R(demand_point=demand_point, n_states=n_states, n_actions=n_actions)
+
         #Build and sol mdp with value iteration (mdptoolbox)
-        mdp=mdptoolbox.mdp.ValueIteration(transitions=P, rewards=R, discount=gamma)
+        mdp=mdptoolbox.mdp.ValueIteration(transitions=P, reward=R, discount=gamma)
 
         mdp.run()
 
@@ -128,17 +125,25 @@ class ControlModule:
                      gamma: np.float64) -> np.ndarray:
         """ Function that computes all the required iterations (control-loop) to satisfy the power demand """
         response = np.zeros_like(a=demand, dtype=np.float64)
+        
+        try:
+            P = ControlModule.generate_P(probs)
+        except Exception as e:
+            raise ValueError(f"Failed to generate transition matrix: {e}")
 
         for i in range(len(demand)):
-            action = ControlModule.control_iteration() #Control iteration devuelve un int pero por ahora me da igual
+            demand_point = round(demand[i], 2)
+            current_state = np.int32(100 * response[i - 1])
 
-            if action == "d":
+            action = ControlModule.control_iteration(demand_point, current_state, P, n_states, n_actions, gamma) #We handle one control iteration 
+
+            if action == 0:
                 outcomes = np.array([-2, -1, 0], dtype=np.int32)
                 result = np.random.choice(outcomes, p=probs[0])
-            elif action == "m":
+            elif action == 1:
                 outcomes = np.array([-1, 0, 1], dtype=np.int32)
                 result = np.random.choice(outcomes, p=probs[1])
-            elif action == "i":
+            elif action == 2:
                 outcomes = np.array([0, 1, 2], dtype=np.int32)
                 result = np.random.choice(outcomes, p=probs[2])
             else:
