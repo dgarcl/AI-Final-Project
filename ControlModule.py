@@ -10,25 +10,22 @@ class ControlModule:
         pass
 
     @staticmethod
-    def generate_P(reactor_file) -> np.array:
+    def generate_P(probabilities: np.array) -> np.array:
         """ Function that generates the probabilities (transition) matrix """
 
         N = 100 #Number of states
 
-        with open(reactor_file, "r") as file:
-            reactor_data = json.load(file)
-        probs = reactor_data["probabilities"]
-        for a in [probs["decrease"], probs["maintain"], probs["increase"]]:
-            if len(a) != 3:
+        for action in probabilities:
+            if len(action) != 3:
                 raise ValueError("Invalid probabilities")
             total = 0
-            for p in a:
-                total += p
+            for prob in action:
+                total += prob
             if not np.isclose(1, total):
                 raise ValueError("Invalid probabilities")
-        d2, d1, d0 = probs["decrease"]
-        m_1, m0, m1 =  probs["maintain"]
-        i0, i1, i2 = probs["increase"]
+        d2, d1, d0 = probabilities[0]
+        m_1, m0, m1 =  probabilities[1]
+        i0, i1, i2 = probabilities[2]
 
         Pd = np.zeros((N, N))
         Pm = np.zeros((N, N))
@@ -36,40 +33,40 @@ class ControlModule:
         #rows = current state
         #columns = next state
 
-        for s in range(N):
+        for row in range(N):
             #In Pd we modify (s, s-2), (s, s-1) and (s, s)
-            if s == 0:  #Bound the probabilities so that we never go below zero 
+            if row == 0:  #Bound the probabilities so that we never go below zero 
                 Pd[0][0] = 1
-            elif s == 1: 
+            elif row == 1: 
                 Pd[1][0] = d2 + d1
                 Pd[1][1] = d0
             else:
-                Pd[s][s-2] = d2
-                Pd[s][s-1] = d1
-                Pd[s][s] = d0
+                Pd[row][row-2] = d2
+                Pd[row][row-1] = d1
+                Pd[row][row] = d0
 
             #In Pm we modify (s, s-1), (s, s) and (s, s+1)
-            if s == 0:
+            if row == 0:
                 Pm[0][0] = m_1 + m0
                 Pm[0][1] = m1
-            elif s == 99:
+            elif row == 99:
                 Pm[99][98] = m_1
                 Pm[99][99] = m0 + m1
             else:
-                Pm[s][s-1] = m_1
-                Pm[s][s] = m0
-                Pm[s][s+1] = m1
+                Pm[row][row-1] = m_1
+                Pm[row][row] = m0
+                Pm[row][row+1] = m1
 
             #In Pi we modify (s, s), (s, s+1), (s, s+2)
-            if s == 98:
+            if row == 98:
                 Pi[98][98] = i0
                 Pi[98][99] = i1 + i2
-            elif s == 99:
+            elif row == 99:
                 Pi[99][99] = 1
             else:
-                Pi[s][s] = i0
-                Pi[s][s+1] = i1
-                Pi[s][s+2] = i2
+                Pi[row][row] = i0
+                Pi[row][row+1] = i1
+                Pi[row][row+2] = i2
         return np.array([Pd, Pm, Pi]) #Array of matrices
 
 
