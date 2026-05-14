@@ -159,11 +159,11 @@ class ControlModule:
             result /= n_states #Normalise the result
 
             #Modify the output according to the result obtained
-            if response[i - 1] + result >= 0 and response[i - 1] + result <= 1:
+            if response[i - 1] + result >= 0 and response[i - 1] + result <= 0.99:
                 response[i] = response[i - 1] + result
             elif response[i - 1] + result < 0: #Force 0 as the lower bound
                 response[i] = 0
-            elif response[i - 1] + result > 1: #Force 1 as the upper bound
-                response[i] = 1
+            elif response[i - 1] + result > 0.99: #Force 0.99 as the upper bound
+                response[i] = 0.99
 
         return response
