@@ -3,54 +3,28 @@ import numpy as np
 
 def MAE(y_true: np.ndarray, y_pred: np.ndarray) -> np.float64:
     """ Implementation of the Mean Absolute Error (MAE) """
-    sum = 0
-
-    for i in range(len(y_true)):
-        sum += abs(y_true[i] - y_pred[i])
-
-    return sum / len(y_true)
+    return np.mean(abs(y_true - y_pred))
 
 def MSE(y_true: np.ndarray, y_pred: np.ndarray) -> np.float64:
     """ Implementation of the Mean Squared Error (MSE) """
-    sum = 0
-
-    for i in range(len(y_true)):
-        sum += (y_true[i] - y_pred[i]) ** 2
-
-    return sum / len(y_true)
+    return np.mean((y_true - y_pred) ** 2)
 
 def R2(y_true: np.ndarray, y_pred: np.ndarray) -> np.float64:
     """ Implementation of the R2 metric """
-    mean_true = 0
+    mean_true = np.mean(y_true)
 
-    for i in range(len(y_true)):
-        mean_true += y_true[i] / len(y_true) 
-
-    regressor = 0
-    mean_based_estimator = 0
-
-    for i in range(len(y_true)):
-        regressor += (y_true[i] - y_pred[i]) ** 2
-        mean_based_estimator += (y_true[i] - mean_true) ** 2
+    regressor = np.sum((y_true - y_pred) ** 2)
+    mean_based_estimator = np.sum((y_true - mean_true) ** 2)
 
     return 1 - (regressor / mean_based_estimator)
 
 def Corr(y_true: np.ndarray, y_pred: np.ndarray) -> np.float64:
     """ Implementation of the Pearson's Correlation Coefficient """
-    mean_true = 0
-    mean_pred = 0
+    mean_true = np.mean(y_true)
+    mean_pred = np.mean(y_pred)
 
-    for i in range(len(y_true)):
-        mean_true += y_true[i] / len(y_true)
-        mean_pred += y_pred[i] / len(y_true)
+    var_true = np.mean((y_true - mean_true) ** 2)
+    var_pred = np.mean((y_pred - mean_pred) ** 2)
+    cov = np.mean((y_true - mean_true) * (y_pred - mean_pred))
 
-    var_true = 0
-    var_pred = 0
-    cov_true_pred = 0
-
-    for i in range(len(y_true)):
-        var_true += (y_true[i] - mean_true) ** 2 / len(y_true)
-        var_pred += (y_pred[i] - mean_pred) ** 2 / len(y_true)
-        cov_true_pred += (y_true[i] - mean_true) * (y_pred[i] - mean_pred) / len(y_true)
-
-    return cov_true_pred / np.sqrt(var_true * var_pred)
+    return cov / np.sqrt(var_true * var_pred)
