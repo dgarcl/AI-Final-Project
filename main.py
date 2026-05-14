@@ -45,8 +45,11 @@ def main() -> None:
     # Parse the main arguments
     reactor, gamma, random_seed = get_args()
 
-    # Set the random seed
-    np.random.seed(random_seed)
+    if random_seed > 0:
+        # Set the random seed
+        np.random.seed(random_seed)
+    else:
+        raise ValueError(f"Invalid params: the random seed must be positive")
 
     # Get the probabilities from the reactor's dynamics
     probs = np.array([reactor.probabilities['decrease'], 
@@ -63,12 +66,15 @@ def main() -> None:
     n_states  = 100
     n_actions = 3
 
-    # Get the response time-series (answer to the demand time-series)
-    response  = ControlModule.control_loop(demand=demand, 
-                                           probs=probs,
-                                           n_states=n_states,
-                                           n_actions=n_actions,
-                                           gamma=gamma)
+    if 0 < gamma <= 1:
+        # Get the response time-series (answer to the demand time-series)
+        response  = ControlModule.control_loop(demand=demand, 
+                                            probs=probs,
+                                            n_states=n_states,
+                                            n_actions=n_actions,
+                                            gamma=gamma)
+    else:
+        raise ValueError(f"Invalid params: gamma must be in the interval (0, 1]")
     
     # Plot the original power demand
     plot_demand(demand=demand)
@@ -99,4 +105,7 @@ def main() -> None:
     plot_r2_and_pearson(R2=_R2, Pearson=_Corr)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except ValueError as e:
+        print(e)

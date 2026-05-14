@@ -23,3 +23,7 @@ Thumbs.db
 
 # JSON files
 *.json
+
+# Test files
+tester.py
+results/
