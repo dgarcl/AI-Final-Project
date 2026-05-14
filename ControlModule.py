@@ -124,38 +124,46 @@ class ControlModule:
                      n_actions: np.int32,
                      gamma: np.float64) -> np.ndarray:
         """ Function that computes all the required iterations (control-loop) to satisfy the power demand """
-        response = np.zeros_like(a=demand, dtype=np.float64)
-        
-        try:
+        response = np.zeros_like(a=demand, dtype=np.float64) #Generate a vector (as demand) to contain the output
+
+        try: #If probs are valid probabilities, we generate the probability matrices
             P = ControlModule.generate_P(probs)
         except Exception as e:
             raise ValueError(f"Failed to generate transition matrix: {e}")
 
-        for i in range(len(demand)):
-            demand_point = round(demand[i], 2)
+        for i in range(len(demand)): #Loop through the demand points in the array
+            #Get the demand point and the current state of the MDP
+            demand_point = demand[i]
+
+            if i == 0: #Handle the initial state of the MDP
+                response[i - 1] = demand_point
+            
             current_state = np.int32(100 * response[i - 1])
+            
+            #We handle one control iteration inside the function
+            action = ControlModule.control_iteration(demand_point, current_state, P, n_states, n_actions, gamma) 
 
-            action = ControlModule.control_iteration(demand_point, current_state, P, n_states, n_actions, gamma) #We handle one control iteration 
-
-            if action == 0:
+            #Choose one of the outcomes probabilistically
+            if action == 0: #Decrease action ("d")
                 outcomes = np.array([-2, -1, 0], dtype=np.int32)
                 result = np.random.choice(outcomes, p=probs[0])
-            elif action == 1:
+            elif action == 1: #Mantain action ("m")
                 outcomes = np.array([-1, 0, 1], dtype=np.int32)
                 result = np.random.choice(outcomes, p=probs[1])
-            elif action == 2:
+            elif action == 2: #Increase action ("i")
                 outcomes = np.array([0, 1, 2], dtype=np.int32)
                 result = np.random.choice(outcomes, p=probs[2])
             else:
                 raise ValueError(f"Unknown action: {action}")
 
-            result /= n_states
+            result /= n_states #Normalise the result
 
+            #Modify the output according to the result obtained
             if response[i - 1] + result >= 0 and response[i - 1] + result <= 1:
                 response[i] = response[i - 1] + result
-            elif response[i - 1] + result < 0:
-                response[i] = 0        
-            elif response[i - 1] + result > 1:
+            elif response[i - 1] + result < 0: #Force 0 as the lower bound
+                response[i] = 0
+            elif response[i - 1] + result > 1: #Force 1 as the upper bound
                 response[i] = 1
-        
+
         return response
