@@ -19,12 +19,15 @@ class ControlModule:
             total = 0
             for prob in action:
                 total += prob
+                if (prob > 1) or (prob < 0):
+                    raise ValueError("Invalid probabilities")
             if not np.isclose(1, total):
                 raise ValueError("Invalid probabilities")
             
         d2, d1, d0 = probabilities[0]
         m_1, m0, m1 =  probabilities[1]
         i0, i1, i2 = probabilities[2]
+
 
         Pd = np.zeros((N, N))
         Pm = np.zeros((N, N))
