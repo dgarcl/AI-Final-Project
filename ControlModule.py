@@ -10,24 +10,24 @@ class ControlModule:
     @staticmethod
     def generate_P(probabilities: np.array) -> np.array:
         """ Function that generates the probabilities (transition) matrix """
-
         N = 100 #Number of states
 
         for action in probabilities:
             if len(action) != 3:
                 raise ValueError("Invalid probabilities")
+            
             total = 0
             for prob in action:
                 total += prob
                 if (prob > 1) or (prob < 0):
                     raise ValueError("Invalid probabilities")
+                
             if not np.isclose(1, total):
                 raise ValueError("Invalid probabilities")
             
         d2, d1, d0 = probabilities[0]
         m_1, m0, m1 =  probabilities[1]
         i0, i1, i2 = probabilities[2]
-
 
         Pd = np.zeros((N, N))
         Pm = np.zeros((N, N))
@@ -74,33 +74,34 @@ class ControlModule:
     @staticmethod
     def generate_R(demand_point: np.float64, n_states: np.int32, n_actions: np.int32) -> np.ndarray:
         """ Function that generates the rewards (costs) matrix """
-        N=n_states #Number of states
+        N = n_states #Number of states
 
         #compute base distance for all possible destination states
         distances = np.zeros(N, dtype=np.float64)
+
         for s in range(N):
             level_power = s / N #lower bound of interval
             distances[s] = abs(demand_point - level_power) 
         
         #build R matrix
-        R = np.zeros ((n_actions ,N, N), dtype=np.float64)
+        R = np.zeros ((n_actions, N, N), dtype=np.float64)
 
         for s in range(N): #original state
             for s_next in range(N): #destination state
                 #how far is s_next from demand
                 base_cost = distances[s_next] 
                 #how far is s from demand
-                origin_distance=distances[s] 
+                origin_distance = distances[s] 
 
                 for a in range(n_actions):
                     #penalize x2 if destination is further from demand than origin
                     if base_cost > origin_distance:
-                        cost = 2*base_cost
+                        cost = 2 * base_cost
                     else:
                         cost = base_cost
                     
                     #we use negative beacuse mdptoolbox maximizes reward
-                    R[a,s,s_next]=-cost 
+                    R[a, s, s_next] = -cost 
 
         return R
 
@@ -108,10 +109,10 @@ class ControlModule:
     def control_iteration(demand_point: np.float64, current_state: np.float64, P: np.ndarray, n_states: np.int32, n_actions: np.int32, gamma: np.float64) -> np.int32:
         """ Function that computes one control-iteration """
         #generate reward matrix for demand point 
-        R=ControlModule.generate_R(demand_point=demand_point, n_states=n_states, n_actions=n_actions)
+        R = ControlModule.generate_R(demand_point=demand_point, n_states=n_states, n_actions=n_actions)
 
         #Build and sol mdp with value iteration (mdptoolbox)
-        mdp=mdptoolbox.mdp.ValueIteration(transitions=P, reward=R, discount=gamma)
+        mdp = mdptoolbox.mdp.ValueIteration(transitions=P, reward=R, discount=gamma)
 
         mdp.run()
 
@@ -139,7 +140,6 @@ class ControlModule:
         for i in range(1, len(demand)): #Loop through the demand points in the array
             #Get the demand point and the current state of the MDP
             demand_point = demand[i]
-
             current_state = int(response[i - 1] * n_states)
 
             #We handle one control iteration inside the function
