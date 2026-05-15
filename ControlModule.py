@@ -134,17 +134,14 @@ class ControlModule:
         except Exception as e:
             raise ValueError(f"Failed to generate transition matrix: {e}")
 
-        for i in range(len(demand)): #Loop through the demand points in the array
-            #Get the demand point and the current state of the MDP
+        response[0] = demand[0]  # or 0.0
+
+        for i in range(1, len(demand)):
             demand_point = demand[i]
 
-            if i == 0: #Handle the initial state of the MDP
-                response[i - 1] = demand_point
-            
-            current_state = np.int32(100 * response[i - 1])
-            
-            #We handle one control iteration inside the function
-            action = ControlModule.control_iteration(demand_point, current_state, P, n_states, n_actions, gamma) 
+            current_state = int(response[i - 1] * n_states)
+
+            action = ControlModule.control_iteration(demand_point, current_state, P, n_states, n_actions, gamma)
 
             #Choose one of the outcomes probabilistically
             if action == 0: #Decrease action ("d")
